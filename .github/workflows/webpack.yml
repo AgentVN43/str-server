@@ -35,7 +35,7 @@ jobs:
         env:
           CI: true
 
-      - name: Deploy via SSH (git pull + build + pm2)
+      - name: Deploy via SSH (pm2)
         uses: appleboy/ssh-action@v1.0.3
         with:
             host: ${{ secrets.SERVER_HOST }}
@@ -46,8 +46,8 @@ jobs:
               cd /www/wwwroot/strapi.annk.info
               
               # restart
-              pm2 restart strapi || pm2 start "npm run start" --name strapi --cwd /www/wwwroot/strapi.annk.info
-              pm2 save
+              /root/.nvm/versions/node/v18.18.2/bin/pm2 restart strapi || /root/.nvm/versions/node/v18.18.2/bin/pm2 start "npm run start" --name strapi --cwd /www/wwwroot/strapi.annk.info
+              /root/.nvm/versions/node/v18.18.2/bin/pm2 save
 
               # smoke test
               curl -sI http://127.0.0.1:1337/admin | head -n1 || true
