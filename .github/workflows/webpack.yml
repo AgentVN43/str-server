@@ -33,8 +33,7 @@ jobs:
             cd /www/wwwroot/strapi.annk.info
 
             echo "[1/4] Install deps..."
-            npm i --no-audit --no-fund || true
-            npm ci
+            npm install
             npm install pg --save
 
             echo "[2/4] Build Strapi..."
