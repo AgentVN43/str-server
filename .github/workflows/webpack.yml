@@ -62,6 +62,11 @@ jobs:
           script: |
             set -e
             cd /www/wwwroot/strapi.annk.info
+            
+            # === BẮT BUỘC: Load NVM để có node/npm/npx ===
+            export NVM_DIR="/root/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
             # Start/restart with npx pm2 (uses local pm2 from devDependencies)
             npx pm2 restart strapi || npx pm2 start "npm run start" --name strapi
