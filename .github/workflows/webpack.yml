@@ -22,10 +22,12 @@ jobs:
           SERVER_PATH: ${{ secrets.SERVER_PATH }} # vd: /www/wwwroot/strapi.annk.info
         run: |
           echo "🔁 Rsync source..."
-          sshpass -e rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" \
-            --exclude '.git' --exclude '.github' --exclude 'node_modules' \
-            --exclude '.env' --exclude 'types/*' \
-            ./ "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/"
+          sshpass -e rsync -rltDzv --delete \
+          --no-owner --no-group --omit-dir-times \
+          --exclude '.git' --exclude '.github' --exclude 'node_modules' \
+          --exclude '.env' --exclude 'types' --exclude 'src/extensions/.gitkeep' \
+          -e "ssh -o StrictHostKeyChecking=no" \
+          ./ "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/"
 
           echo "⚙️ Build & restart on server..."
           sshpass -e ssh -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" << 'EOF'
