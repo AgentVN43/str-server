@@ -63,9 +63,6 @@ jobs:
             set -e
             cd /www/wwwroot/strapi.annk.info
 
-            # Reinstall production deps (optional but safe)
-            npm ci --only=production
-
             # Start/restart with npx pm2 (uses local pm2 from devDependencies)
             npx pm2 restart strapi || npx pm2 start "npm run start" --name strapi
             npx pm2 save
