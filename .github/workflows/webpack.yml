@@ -34,25 +34,20 @@ jobs:
         run: NODE_ENV=production npm run build
         env:
           CI: true
-      - name: PM2
-        run: NODE_ENV=production pm2 start "npm run start" --name strapi
 
-      - name: Deploy to Production
-        env:
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SSHPASS: ${{ secrets.SSH_PASSWORD }}
-        run: |
-          # Direct rsync of build files
-          #sshpass -e rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./build/* $SERVER_USER@$SERVER_HOST:/www/wwwroot/annk.info/fe/
-          
-          # Verify deployment
-          sshpass -e ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << 'DEPLOY'
-            echo "Verifying deployment..."
-            cd /www/wwwroot/strapi.annk.info
-            echo "Current directory: $(pwd)"
-            echo "Files in directory:"
-            ls -la
-            echo "Deployment completed successfully!"
-          DEPLOY
+      - name: Deploy via SSH (git pull + build + pm2)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+            host: ${{ secrets.SERVER_HOST }}
+            username: ${{ secrets.SERVER_USER }}
+            password: ${{ secrets.SSH_PASSWORD }} 
+            script: |
+              set -e
+              cd /www/wwwroot/strapi.annk.info
+              
+              # restart
+              pm2 restart strapi || pm2 start "npm run start" --name strapi --cwd /www/wwwroot/strapi.annk.info
+              pm2 save
+
+              # smoke test
+              curl -sI http://127.0.0.1:1337/admin | head -n1 || true
