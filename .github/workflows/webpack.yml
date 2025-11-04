@@ -30,7 +30,7 @@ jobs:
           SSHPASS: ${{ secrets.SSH_PASSWORD }}
         run: |
           RSYNC_EXCLUDES="--exclude node_modules --exclude .git --exclude .github --exclude .env"
-          sshpass -e rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -p ${SERVER_PORT:-22}" \
+          sshpass -e rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no " \
             $RSYNC_EXCLUDES \
             ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.SERVER_PATH }}/
 
@@ -38,7 +38,7 @@ jobs:
         env:
           SSHPASS: ${{ secrets.SSH_PASSWORD }}
         run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no -p ${SERVER_PORT:-22} \
+          sshpass -e ssh -o StrictHostKeyChecking=no \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE'
               set -e
               cd "${SERVER_PATH}"
