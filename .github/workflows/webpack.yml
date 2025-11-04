@@ -29,6 +29,9 @@ jobs:
 
       - name: Install PG dependencies
         run: npm install pg --save
+      
+      - name: Install PM2
+        run: npm install pm2 --save
           
       - name: Build website
         run: NODE_ENV=production npm run build
@@ -46,8 +49,8 @@ jobs:
               cd /www/wwwroot/strapi.annk.info
               
               # restart
-              /root/.nvm/versions/node/v18.18.2/bin/pm2 restart strapi || /root/.nvm/versions/node/v18.18.2/bin/pm2 start "npm run start" --name strapi --cwd /www/wwwroot/strapi.annk.info
-              /root/.nvm/versions/node/v18.18.2/bin/pm2 save
+              npx pm2 restart strapi || npx pm2 start "npm run start" --name strapi
+              npx pm2 save
 
               # smoke test
               curl -sI http://127.0.0.1:1337/admin | head -n1 || true
