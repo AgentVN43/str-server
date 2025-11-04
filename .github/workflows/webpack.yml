@@ -24,9 +24,10 @@ jobs:
             cd /www/wwwroot/strapi.annk.info
             # đảm bảo repo đã clone sẵn từ trước
             git fetch --all
-            git reset --hard master
+            git reset --hard origin/master
             # dọn file thừa tương đương --delete của rsync (cẩn thận .env/uploads)
-            git clean -fdx -e .env -e public/uploads
+            git clean -fdx -e .env -e public/uploads -e .user.ini || true
+
 
             # deps + build
             npm i --no-audit --no-fund || true
