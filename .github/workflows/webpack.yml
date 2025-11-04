@@ -33,8 +33,10 @@ jobs:
         run: |
           echo "🔁 Sync source code..."
           sshpass -e rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" \
-            --exclude '.git' --exclude '.github' --exclude 'node_modules' --exclude '.env' \
-            ./ $SERVER_USER@$SERVER_HOST:/www/wwwroot/strapi.annk.info/
+                    --exclude '.git' --exclude '.github' --exclude 'node_modules' \
+                    --exclude '.env' --exclude 'types/generated' \
+                    ./ $SERVER_USER@$SERVER_HOST:/www/wwwroot/strapi.annk.info/ || true
+
 
           echo "⚙️  Build & restart Strapi..."
           sshpass -e ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << 'EOF'
