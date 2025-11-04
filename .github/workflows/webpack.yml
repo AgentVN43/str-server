@@ -72,7 +72,8 @@ jobs:
             nvm use --delete-prefix v18.18.2 --silent
 
             # Start/restart with npx pm2 (uses local pm2 from devDependencies)
-            npx pm2 restart strapi || npx pm2 start "npm run start" --name strapi
+            #npx pm2 restart strapi
+            npx pm2 start "npm run start" --name strapi
             npx pm2 save
 
             # Smoke test
