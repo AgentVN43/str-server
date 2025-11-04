@@ -21,6 +21,9 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
+        run: npm i
+
+      - name: Install clear dependencies
         run: npm ci
           
       - name: Build website
