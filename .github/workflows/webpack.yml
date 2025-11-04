@@ -2,8 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - master
+    branches: [ "master" ]
   workflow_dispatch:
 
 jobs:
@@ -20,37 +19,48 @@ jobs:
           node-version: '18'
           cache: 'npm'
 
-
       - name: Install dependencies
-        run: npm install
-
-      - name: Install clean dependencies
         run: npm ci
 
-      - name: Install PG dependencies
+      - name: Install PG (if not in package.json)
         run: npm install pg --save
-      
-      - name: Install PM2
-        run: npm install pm2 --save
-          
-      - name: Build website
+
+      - name: Install PM2 as dev dependency (for npx)
+        run: npm install pm2 --save-dev
+
+      - name: Build Strapi (production)
         run: NODE_ENV=production npm run build
         env:
           CI: true
 
-      - name: Deploy via SSH (pm2)
+      - name: Deploy built files to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          source: "."
+          target: "/www/wwwroot/strapi.annk.info"
+          # Exclude unnecessary files
+          exclude: ".git,.github,*.md,*.yml,*.yaml"
+
+      - name: Restart app via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-            host: ${{ secrets.SERVER_HOST }}
-            username: ${{ secrets.SERVER_USER }}
-            password: ${{ secrets.SSH_PASSWORD }} 
-            script: |
-              set -e
-              cd /www/wwwroot/strapi.annk.info
-              
-              # restart
-              npx pm2 restart strapi || npx pm2 start "npm run start" --name strapi
-              npx pm2 save
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            set -e
+            cd /www/wwwroot/strapi.annk.info
 
-              # smoke test
-              curl -sI http://127.0.0.1:1337/admin | head -n1 || true
+            # Reinstall production deps (optional but safe)
+            npm ci --only=production
+
+            # Start/restart with npx pm2 (uses local pm2 from devDependencies)
+            npx pm2 restart strapi || npx pm2 start "npm run start" --name strapi
+            npx pm2 save
+
+            # Smoke test
+            sleep 5
+            curl -f http://127.0.0.1:1337/admin > /dev/null && echo "✅ OK" || (echo "❌ Failed"; exit 1)
