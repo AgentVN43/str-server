@@ -13,38 +13,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Không cần build hay PM2 trên CI. Build/PM2 sẽ chạy ở VPS.
-      - name: Deploy to VPS (rsync + build + pm2)
-        env:
-          SSHPASS: ${{ secrets.SSH_PASSWORD }}   # sshpass dùng biến này
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_PATH: ${{ secrets.SERVER_PATH }} # vd: /www/wwwroot/strapi.annk.info
-        run: |
-          echo "🔁 Rsync source..."
-          sshpass -e rsync -rltDzv --delete \
-          --no-owner --no-group --omit-dir-times \
-          --exclude '.git' --exclude '.github' --exclude 'node_modules' \
-          --exclude '.env' --exclude 'types' --exclude 'src/extensions/.gitkeep' \
-          -e "ssh -o StrictHostKeyChecking=no" \
-          ./ "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/"
-
-          echo "⚙️ Build & restart on server..."
-          sshpass -e ssh -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" << 'EOF'
+      - name: Deploy via SSH (git pull + build + pm2)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}   # hoặc key: key: ${{ secrets.SSH_KEY }}
+          script: |
             set -e
-            cd "$SERVER_PATH"
+            cd /www/wwwroot/strapi.annk.info
+            # đảm bảo repo đã clone sẵn từ trước
+            git fetch --all
+            git reset --hard origin/master
+            # dọn file thừa tương đương --delete của rsync (cẩn thận .env/uploads)
+            git clean -fdx -e .env -e public/uploads
 
-            echo "[1/3] Install deps"
+            # deps + build
             npm i --no-audit --no-fund || true
-            node -e "require('pg')" 2>/dev/null || npm install pg --save
-
-            echo "[2/3] Build Strapi"
+            npm install pg --save
             NODE_ENV=production npm run build
 
-            echo "[3/3] PM2 (re)start"
-            pm2 restart strapi || pm2 start "npm run start" --name strapi --cwd "$SERVER_PATH"
+            # restart
+            pm2 restart strapi || pm2 start "npm run start" --name strapi --cwd /www/wwwroot/strapi.annk.info
             pm2 save
 
-            echo "Smoke test:"
+            # smoke test
             curl -sI http://127.0.0.1:1337/admin | head -n1 || true
-          EOF
