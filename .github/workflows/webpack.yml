@@ -1,9 +1,8 @@
-name: CI/CD Pipeline
+name: CI/CD Strapi
 
 on:
   push:
-    branches:
-      - master
+    branches: [ "master" ]
   workflow_dispatch:
 
 jobs:
@@ -12,41 +11,56 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node.js (20.x)
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
 
-      - name: Install dependencies
-        run: npm i
+      # (local CI) Xác thực lockfile và deps cơ bản, không build tại CI
+      - name: Install deps (npm i -> npm ci)
+        run: |
+          npm i --no-audit --no-fund || true
+          npm ci
 
-      - name: Install clear dependencies
-        run: npm ci
-          
-      - name: Build website
-        run: npm run build
+      - name: Rsync source to server
         env:
-          CI: true
-
-      - name: Deploy to Production
-        env:
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SSHPASS: ${{ secrets.SSH_PASSWORD }}
         run: |
-          # Direct rsync of build files
-          sshpass -e rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./build/* $SERVER_USER@$SERVER_HOST:/www/wwwroot/strapi.annk.info
-          
-          # Verify deployment
-          sshpass -e ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << 'DEPLOY'
-            echo "Verifying deployment..."
-            cd /www/wwwroot/strapi.annk.info
-            echo "Current directory: $(pwd)"
-            echo "Files in directory:"
-            ls -la
-            echo "Deployment completed successfully!"
-          DEPLOY
+          RSYNC_EXCLUDES="--exclude node_modules --exclude .git --exclude .github --exclude .env"
+          sshpass -e rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no -p ${SERVER_PORT:-22}" \
+            $RSYNC_EXCLUDES \
+            ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.SERVER_PATH }}/
+
+      - name: Build on server & restart PM2
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no -p ${SERVER_PORT:-22} \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE'
+              set -e
+              cd "${SERVER_PATH}"
+
+              echo "[1/4] Install deps (npm i -> npm ci)"
+              npm i --no-audit --no-fund || true
+              npm ci
+
+              echo "[2/4] Ensure 'pg' exists"
+              node -e "require('pg')" 2>/dev/null || npm install pg --save
+
+              echo "[3/4] Build (no manual dist mkdir/copy)"
+              NODE_ENV=production npm run build
+
+              echo "[4/4] Start/Restart PM2"
+              if pm2 describe strapi >/dev/null 2>&1; then
+                pm2 restart strapi
+              else
+                pm2 start "npm run start" --name strapi --cwd "${SERVER_PATH}"
+                pm2 save
+              fi
+
+              echo "Smoke test:"
+              curl -sI http://127.0.0.1:1337/admin | head -n1 || true
+          REMOTE
