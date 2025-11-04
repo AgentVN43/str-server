@@ -13,54 +13,43 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js (20.x)
+      - name: Setup Node.js (18.x)
         uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "npm"
 
-      # (local CI) Xác thực lockfile và deps cơ bản, không build tại CI
+      # Cài dependencies để đảm bảo lockfile hợp lệ (không build tại CI)
       - name: Install deps (npm i -> npm ci)
         run: |
           npm i --no-audit --no-fund || true
           npm ci
 
-      - name: Rsync source to server
+      - name: Deploy Strapi to VPS
         env:
           SSHPASS: ${{ secrets.SSH_PASSWORD }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
         run: |
-          RSYNC_EXCLUDES="--exclude node_modules --exclude .git --exclude .github --exclude .env"
-          sshpass -e rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no " \
-            $RSYNC_EXCLUDES \
-            ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.SERVER_PATH }}/
+          echo "🔁 Sync source code..."
+          sshpass -e rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" \
+            --exclude '.git' --exclude '.github' --exclude 'node_modules' --exclude '.env' \
+            ./ $SERVER_USER@$SERVER_HOST:/www/wwwroot/strapi.annk.info/
 
-      - name: Build on server & restart PM2
-        env:
-          SSHPASS: ${{ secrets.SSH_PASSWORD }}
-        run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'REMOTE'
-              set -e
-              cd "${SERVER_PATH}"
+          echo "⚙️  Build & restart Strapi..."
+          sshpass -e ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << 'EOF'
+            cd /www/wwwroot/strapi.annk.info
+            echo "[1/4] Install deps..."
+            npm i --no-audit --no-fund || true
+            npm install pg --save
 
-              echo "[1/4] Install deps (npm i -> npm ci)"
-              npm i --no-audit --no-fund || true
-              npm ci
+            echo "[2/4] Build Strapi..."
+            NODE_ENV=production npm run build
 
-              echo "[2/4] Ensure 'pg' exists"
-              node -e "require('pg')" 2>/dev/null || npm install pg --save
+            echo "[3/4] Restart via PM2..."
+            pm2 restart strapi || pm2 start "npm run start" --name strapi --cwd /www/wwwroot/strapi.annk.info
+            pm2 save
 
-              echo "[3/4] Build (no manual dist mkdir/copy)"
-              NODE_ENV=production npm run build
-
-              echo "[4/4] Start/Restart PM2"
-              if pm2 describe strapi >/dev/null 2>&1; then
-                pm2 restart strapi
-              else
-                pm2 start "npm run start" --name strapi --cwd "${SERVER_PATH}"
-                pm2 save
-              fi
-
-              echo "Smoke test:"
-              curl -sI http://127.0.0.1:1337/admin | head -n1 || true
-          REMOTE
+            echo "[4/4] Verify service..."
+            curl -sI http://127.0.0.1:1337/admin | head -n1 || true
+          EOF
