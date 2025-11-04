@@ -1,8 +1,9 @@
-name: CI/CD Strapi
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - master
   workflow_dispatch:
 
 jobs:
@@ -10,33 +11,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Deploy via SSH (git pull + build + pm2)
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}   # hoặc key: key: ${{ secrets.SSH_KEY }}
-          script: |
-            set -e
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install PG dependencies
+        run: npm pg --save
+          
+      - name: Build website
+        run: npm run build
+        env:
+          CI: true
+
+      - name: Deploy to Production
+        env:
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          # Direct rsync of build files
+          #sshpass -e rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./build/* $SERVER_USER@$SERVER_HOST:/www/wwwroot/annk.info/fe/
+          
+          # Verify deployment
+          sshpass -e ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << 'DEPLOY'
+            echo "Verifying deployment..."
             cd /www/wwwroot/strapi.annk.info
-            # đảm bảo repo đã clone sẵn từ trước
-            git fetch --all
-            git reset --hard origin/master
-            # dọn file thừa tương đương --delete của rsync (cẩn thận .env/uploads)
-            git clean -fdx -e .env -e public/uploads -e .user.ini || true
-
-
-            # deps + build
-            npm i --no-audit --no-fund || true
-            npm install pg --save
-            NODE_ENV=production npm run build
-
-            # restart
-            pm2 restart strapi || pm2 start "npm run start" --name strapi --cwd /www/wwwroot/strapi.annk.info
-            pm2 save
-
-            # smoke test
-            curl -sI http://127.0.0.1:1337/admin | head -n1 || true
+            echo "Current directory: $(pwd)"
+            echo "Files in directory:"
+            ls -la
+            echo "Deployment completed successfully!"
+          DEPLOY
