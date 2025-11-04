@@ -20,7 +20,11 @@ jobs:
           node-version: '18'
           cache: 'npm'
 
+
       - name: Install dependencies
+        run: npm install
+
+      - name: Install clean dependencies
         run: npm ci
 
       - name: Install PG dependencies
@@ -30,6 +34,8 @@ jobs:
         run: npm run build
         env:
           CI: true
+      - name: PM2
+        run: NODE_ENV=production pm2 start "npm run start" --name strapi
 
       - name: Deploy to Production
         env:
