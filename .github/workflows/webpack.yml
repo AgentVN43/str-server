@@ -37,7 +37,7 @@ jobs:
           CI: true
 
       - name: Deploy built files to VPS
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v0.1.8
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
@@ -45,7 +45,13 @@ jobs:
           source: "."
           target: "/www/wwwroot/strapi.annk.info"
           # Exclude unnecessary files
-          exclude: ".git,.github,*.md,*.yml,*.yaml"
+          exclude: |
+            .git
+            .github
+            *.md
+            .env
+            .DS_Store
+            .strapi-updater.json
 
       - name: Restart app via SSH
         uses: appleboy/ssh-action@v1.0.3
