@@ -24,7 +24,7 @@ jobs:
           echo "🔁 Rsync source..."
           sshpass -e rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" \
             --exclude '.git' --exclude '.github' --exclude 'node_modules' \
-            --exclude '.env' --exclude 'types/generated' \
+            --exclude '.env' --exclude 'types/*' \
             ./ "$SERVER_USER@$SERVER_HOST:$SERVER_PATH/"
 
           echo "⚙️ Build & restart on server..."
