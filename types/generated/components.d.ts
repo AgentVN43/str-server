@@ -1,5 +1,41 @@
 import type { Schema, Struct } from '@strapi/strapi';
 
+export interface LayoutBanner extends Struct.ComponentSchema {
+  collectionName: 'components_layout_banners';
+  info: {
+    displayName: 'Banner';
+  };
+  attributes: {
+    description: Schema.Attribute.Text;
+    isVisible: Schema.Attribute.Boolean;
+    link: Schema.Attribute.Component<'shared.link', false>;
+  };
+}
+
+export interface LayoutFooter extends Struct.ComponentSchema {
+  collectionName: 'components_layout_footers';
+  info: {
+    displayName: 'Footer';
+  };
+  attributes: {
+    logo: Schema.Attribute.Component<'shared.logo-link', false>;
+    navItems: Schema.Attribute.Component<'shared.link', true>;
+    socialLink: Schema.Attribute.Component<'shared.logo-link', true>;
+  };
+}
+
+export interface LayoutHeader extends Struct.ComponentSchema {
+  collectionName: 'components_layout_headers';
+  info: {
+    displayName: 'Header';
+  };
+  attributes: {
+    CTA: Schema.Attribute.Component<'shared.link', true>;
+    link: Schema.Attribute.Component<'shared.link', true>;
+    logo: Schema.Attribute.Component<'shared.logo-link', false>;
+  };
+}
+
 export interface SharedCard extends Struct.ComponentSchema {
   collectionName: 'components_shared_cards';
   info: {
@@ -9,6 +45,35 @@ export interface SharedCard extends Struct.ComponentSchema {
   attributes: {
     heading: Schema.Attribute.String;
     text: Schema.Attribute.String;
+  };
+}
+
+export interface SharedLink extends Struct.ComponentSchema {
+  collectionName: 'components_shared_links';
+  info: {
+    displayName: 'Link';
+    icon: 'link';
+  };
+  attributes: {
+    href: Schema.Attribute.String;
+    isButtonLink: Schema.Attribute.Boolean;
+    isExternal: Schema.Attribute.Boolean;
+    label: Schema.Attribute.String;
+    type: Schema.Attribute.Enumeration<['primary', 'secondary']>;
+  };
+}
+
+export interface SharedLogoLink extends Struct.ComponentSchema {
+  collectionName: 'components_shared_logo_links';
+  info: {
+    displayName: 'Logo Link';
+    icon: 'alien';
+  };
+  attributes: {
+    href: Schema.Attribute.String;
+    image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    isExternal: Schema.Attribute.Boolean;
+    label: Schema.Attribute.String;
   };
 }
 
@@ -78,7 +143,12 @@ export interface SharedSlider extends Struct.ComponentSchema {
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
+      'layout.banner': LayoutBanner;
+      'layout.footer': LayoutFooter;
+      'layout.header': LayoutHeader;
       'shared.card': SharedCard;
+      'shared.link': SharedLink;
+      'shared.logo-link': SharedLogoLink;
       'shared.media': SharedMedia;
       'shared.quote': SharedQuote;
       'shared.rich-text': SharedRichText;

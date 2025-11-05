@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_layout_footers",
+  "info": {
+    "displayName": "Footer"
+  },
+  "options": {},
+  "attributes": {
+    "logo": {
+      "type": "component",
+      "component": "shared.logo-link",
+      "repeatable": false
+    },
+    "navItems": {
+      "type": "component",
+      "component": "shared.link",
+      "repeatable": true
+    },
+    "socialLink": {
+      "type": "component",
+      "component": "shared.logo-link",
+      "repeatable": true
+    }
+  },
+  "config": {}
+}
