@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_ux_builder_message_boxes",
+  "info": {
+    "displayName": "Message Box"
+  },
+  "options": {},
+  "attributes": {
+    "content": {
+      "type": "string"
+    },
+    "button_text": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

@@ -11,11 +11,21 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "Heading": {
+    "title": {
       "type": "string"
     },
-    "Subheading": {
+    "description": {
       "type": "string"
+    },
+    "blocks": {
+      "type": "dynamiczone",
+      "components": [
+        "blocks.card-grid",
+        "ux-builder.message-box",
+        "ux-builder.image-box",
+        "ux-builder.icon-box",
+        "blocks.hero"
+      ]
     }
   }
 }

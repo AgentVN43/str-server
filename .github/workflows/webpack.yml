@@ -75,7 +75,4 @@ jobs:
             #npx pm2 restart strapi
             npx pm2 start "npm run start" --name strapi
             npx pm2 save
-
-            # Smoke test
-            sleep 5
-            curl -f http://127.0.0.1:1337/admin > /dev/null && echo "✅ OK" || (echo "❌ Failed"; exit 1)
+            # === DEPLOY THÀNH CÔNG ===

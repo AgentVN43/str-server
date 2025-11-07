@@ -6,10 +6,10 @@
   },
   "options": {},
   "attributes": {
-    "href": {
+    "label": {
       "type": "string"
     },
-    "label": {
+    "href": {
       "type": "string"
     },
     "isExternal": {

@@ -1,12 +1,11 @@
 {
-  "collectionName": "components_shared_cards",
+  "collectionName": "components_ux_builder_icon_boxes",
   "info": {
-    "displayName": "Card",
-    "icon": "cast"
+    "displayName": "Icon Box"
   },
   "options": {},
   "attributes": {
-    "title": {
+    "icon": {
       "type": "string"
     },
     "content": {

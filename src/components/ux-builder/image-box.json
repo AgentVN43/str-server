@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_ux_builder_image_boxes",
+  "info": {
+    "displayName": "Image Box"
+  },
+  "options": {},
+  "attributes": {
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "content_2": {
+      "type": "blocks"
+    }
+  },
+  "config": {}
+}

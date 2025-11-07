@@ -1,5 +1,28 @@
 import type { Schema, Struct } from '@strapi/strapi';
 
+export interface BlocksCardGrid extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_card_grids';
+  info: {
+    displayName: 'Card Grid';
+  };
+  attributes: {
+    cards: Schema.Attribute.Component<'shared.card', true>;
+  };
+}
+
+export interface BlocksHero extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_heroes';
+  info: {
+    displayName: 'Hero';
+  };
+  attributes: {
+    heading: Schema.Attribute.String;
+    image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+    subHeading: Schema.Attribute.Component<'shared.rich-text', true>;
+    url: Schema.Attribute.Component<'shared.link', true>;
+  };
+}
+
 export interface LayoutBanner extends Struct.ComponentSchema {
   collectionName: 'components_layout_banners';
   info: {
@@ -43,8 +66,8 @@ export interface SharedCard extends Struct.ComponentSchema {
     icon: 'cast';
   };
   attributes: {
-    heading: Schema.Attribute.String;
-    text: Schema.Attribute.String;
+    content: Schema.Attribute.String;
+    title: Schema.Attribute.String;
   };
 }
 
@@ -84,7 +107,8 @@ export interface SharedMedia extends Struct.ComponentSchema {
     icon: 'file-video';
   };
   attributes: {
-    alt: Schema.Attribute.String;
+    altText: Schema.Attribute.String;
+    caption: Schema.Attribute.String;
     file: Schema.Attribute.Media<'images' | 'files' | 'videos'>;
   };
 }
@@ -140,9 +164,45 @@ export interface SharedSlider extends Struct.ComponentSchema {
   };
 }
 
+export interface UxBuilderIconBox extends Struct.ComponentSchema {
+  collectionName: 'components_ux_builder_icon_boxes';
+  info: {
+    displayName: 'Icon Box';
+  };
+  attributes: {
+    content: Schema.Attribute.String;
+    icon: Schema.Attribute.String;
+  };
+}
+
+export interface UxBuilderImageBox extends Struct.ComponentSchema {
+  collectionName: 'components_ux_builder_image_boxes';
+  info: {
+    displayName: 'Image Box';
+  };
+  attributes: {
+    content_2: Schema.Attribute.Blocks;
+    image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
+  };
+}
+
+export interface UxBuilderMessageBox extends Struct.ComponentSchema {
+  collectionName: 'components_ux_builder_message_boxes';
+  info: {
+    displayName: 'Message Box';
+  };
+  attributes: {
+    button_text: Schema.Attribute.String;
+    content: Schema.Attribute.String;
+    url: Schema.Attribute.String;
+  };
+}
+
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
+      'blocks.card-grid': BlocksCardGrid;
+      'blocks.hero': BlocksHero;
       'layout.banner': LayoutBanner;
       'layout.footer': LayoutFooter;
       'layout.header': LayoutHeader;
@@ -154,6 +214,9 @@ declare module '@strapi/strapi' {
       'shared.rich-text': SharedRichText;
       'shared.seo': SharedSeo;
       'shared.slider': SharedSlider;
+      'ux-builder.icon-box': UxBuilderIconBox;
+      'ux-builder.image-box': UxBuilderImageBox;
+      'ux-builder.message-box': UxBuilderMessageBox;
     }
   }
 }
